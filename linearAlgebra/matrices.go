@@ -1,50 +1,62 @@
-//program that, for a given matrix, creates an identity matrix and yeilds the inverse
-package main
-
-//X = number of rows, Y = number of columns
+//package for creating and doing math with matrices
+//KNOWN ISSUES:
+package datascience
 
 import (
 	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Matrix struct { //data type stores coordinates for a 2D matrix
 	X, Y int
 	Mat  [][]float64
+	Cof  [][]float64
+	Adj  [][]float64
+}
+
+type StringMat struct { //data type holds values for a 2D matrix of string values
+	X, Y int
+	Mat  [][]string
 }
 
 func MakeMat(x, y int) *Matrix { //Instantiates and creates a pointer to an empty 2D matrix
 
 	a := make([][]float64, x)
 
+	var b [][]float64
+
+	var c [][]float64
+
 	for i := range a {
 		a[i] = make([]float64, y)
 	}
 
-	mat := &Matrix{x, y, a}
+	mat := &Matrix{x, y, a, b, c}
 
 	return mat
 }
 
-func StringMatrix(x, y int) [][]string { //creates a blank matrix to hold a string (for the PrintMat func)
+func StringMatrix(x, y int) *StringMat { //converets type Matrix to type StringMat, mainly for use in PrintMat function
 	a := make([][]string, x)
 
 	for i := range a {
 		a[i] = make([]string, y)
 	}
-	return a
+
+	mat := &StringMat{x, y, a}
+
+	return mat
 }
 
-func (m *Matrix) PrintMat() [][]string { //Converts an float64 matrix to string and prints
+func (m *Matrix) PrintMat() *StringMat { //Converts an float64 matrix to string and prints
 	a := StringMatrix(m.X, m.Y)
 	for i := 0; i < len(m.Mat); i++ {
 		for j := 0; j < len(m.Mat[i]); j++ {
-			a[i][j] = strconv.FormatFloat(m.Mat[i][j], 'f', 2, 64)
+			a.Mat[i][j] = strconv.FormatFloat(m.Mat[i][j], 'f', 2, 64)
 		}
-		b := strings.Join(a[i], " ")
+		b := strings.Join(a.Mat[i], " ")
 		fmt.Println(b)
 
 	}
@@ -83,7 +95,26 @@ func MatMult(uno, dos *Matrix) *Matrix { //multiplies 2 matrices, if they can be
 	return res
 }
 
-func (m *Matrix) Invert() *Matrix { //finds the inverse of a matrix
+func (m *Matrix) IdentityMatrix() *Matrix { //creates an identity matrix for a given input matrix
+
+	var res *Matrix
+
+	switch {
+	case m.X != m.Y:
+		fmt.Println("Nah. Not today")
+		return m
+	default:
+		res = MakeMat(m.X, m.Y)
+	}
+
+	for i := range res.Mat {
+		res.Mat[i][i] = 1
+	}
+
+	return res
+}
+
+func (m *Matrix) Invert() *Matrix { //finds the inverse of a matrix. Currently only works for 2x2
 	I := MakeMat(m.X, m.Y)
 
 	if m.X != m.Y {
@@ -118,41 +149,4 @@ func (m *Matrix) Invert() *Matrix { //finds the inverse of a matrix
 		fmt.Println("I can't do that yet")
 	}
 	return I
-}
-
-func (m *Matrix) IdentityMatrix() *Matrix { //creates an identity matrix for a given input matrix
-
-	var res *Matrix
-
-	switch {
-	case m.X != m.Y:
-		fmt.Println("Nah. Not today")
-		return m
-	default:
-		res = MakeMat(m.X, m.Y)
-	}
-
-	for i := range res.Mat {
-		res.Mat[i][i] = 1
-	}
-
-	return res
-}
-
-func main() {
-
-	rand.Seed(time.Now().UnixNano())
-
-	//r := rand.Intn(10)
-
-	m := MakeMat(2, 2)
-	m.RandFill()
-	m.PrintMat()
-
-	m1 := m.Invert()
-	m.PrintMat()
-	m1.PrintMat()
-	m2 := MatMult(m, m1)
-	m2.PrintMat()
-
 }

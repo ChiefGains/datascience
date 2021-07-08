@@ -4,7 +4,7 @@ column of the dataframe, and temporarily convert it into a line for use in this 
 this package will also eventually be able to work in tandem with the Matrices package. Would also
 like to be able to marshal and unmarshal json, which should be at least as easy as csv, if not
 significantly easier.*/
-package regression
+package datascience
 
 import (
 	"fmt"
@@ -13,21 +13,22 @@ import (
 )
 
 //Line defines a fit line and its values.
-//One weakness here is that this line
-//cannot exist in n number of dimensions.
-//We'll work on that.
+//Working on making a line work in n number of dimensions
+//Also, should dimensional attributes be kept in a map in order to label them? like instead of just
+//"dimension 3", do we need things like "heigh" and "weight" for easier manipulation?
 type Line struct {
 	Dimensions int
-	X          [][]float64 //keeps a slice of x values for each dimension
+	X          [][]float64 //keeps a slice of x values for each dimension. Should be indexed in order of dimension
 	Y          []float64
 	XAvg       []float64 //indexed slice of x averages for each dimesion
 	YAvg       float64
-	Slope      []float64 //I *think* we need a different slope for each dimension?
+	Slope      float64 //Slope is the same in every dimension, right? Gotta double check that
 	Intercept  float64
 	Length     float64 //number of values, not true distance of line, which is theoretically infinite
 }
 
-func makeLine(dimensions, points int) *Line {
+//MakeLine an integer "dimensions" as an input and returns a pointer to a line
+func MakeLine(dimensions, points int) *Line {
 	x := make([][]float64, dimensions)
 
 	for i := 0; i < points; i++ {
@@ -49,9 +50,9 @@ func makeLine(dimensions, points int) *Line {
 }
 
 //randFill fills a line with random points, for testing purposes
-func (l *Line) randFill(limit int) {
+func (l *Line) RandFill(limit int) {
 	for i := range l.X {
-		for j := range l.X[i] {
+		for j := range l.X[i] { //need to update this, obviously, since it's broken
 			l.X[i][j] = float64(rand.Intn(limit))
 		}
 		l.Y[i] = float64(rand.Intn(limit))
@@ -81,7 +82,7 @@ be as simple as an iterative statement going through and doing least squares
 for each dimension*/
 
 //fitLine takes data points and fits them to a regression line
-func (l *Line) fitLine() {
+func (l *Line) FitLine() {
 	for i := range l.X {
 		var num float64
 		var den float64
@@ -103,14 +104,17 @@ func (l *Line) fitLine() {
 
 }
 
-/*predict still needs updated to handle multiple, don't know how to do that yet*/
+//THIS FUNCTION IS BEING UPDATED TO HANDLE MULTIPLE REGRESSION. WE APPRECIATE YOUR PATIENCE
 //predict looks at a fit line, looks at an input variable, and predicts the outcome based on the fit line
-func (l *Line) predict(i int) float64 {
-	x := float64(i)
+func (l *Line) Predict(variables ...int) []float64 {
+	res := make([]float64, len(variables))
+	for _, d := range variables {
+		x := float64(d)
 
-	y := l.Intercept + (l.Slope * x)
+		res = append(res, l.Intercept+(l.Slope[0]*x))
 
-	fmt.Println(y)
+		fmt.Println(y)
+	}
 
-	return y
+	return res
 }

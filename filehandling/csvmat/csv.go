@@ -12,7 +12,7 @@
 //Other Note: this version will not automatically detect if there are column names, it
 //will just assume that there are and fill them in. Later version will add sophistication
 
-package csvmat
+package datascience
 
 import (
 	"encoding/csv"
@@ -35,7 +35,7 @@ type DataFrame struct { //this type, or type test if you will, is going to just 
 	DF      [][]*dataFloat
 }
 
-func check(err error) {
+func check(err error) { //well this is bad error handling. And by that I mean it isn't really even error handling
 	if err != nil {
 		log.Fatal(err)
 	}
