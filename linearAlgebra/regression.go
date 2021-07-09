@@ -39,7 +39,7 @@ func MakeLine(dimensions, points int) *Line {
 
 	xavg := make([]float64, dimensions)
 	var yavg float64
-	slope := make([]float64, dimensions)
+	var slope float64
 	var intercept float64
 	length := float64(points)
 
@@ -97,7 +97,7 @@ func (l *Line) FitLine() {
 			den += math.Pow(a, 2)
 		}
 
-		l.Slope[i] = num / den
+		l.Slope = num / den //this is useless inside of the loop. I'm still unclear if slope is constant in all dimensions
 	}
 
 	//l.Intercept = l.YAvg - (l.Slope * l.XAvg) *I DON'T KNOW HOW TO DO THIS FOR MULTIPLE REGRESSION*
@@ -111,9 +111,9 @@ func (l *Line) Predict(variables ...int) []float64 {
 	for _, d := range variables {
 		x := float64(d)
 
-		res = append(res, l.Intercept+(l.Slope[0]*x))
+		res = append(res, l.Intercept+(l.Slope*x))
 
-		fmt.Println(y)
+		fmt.Println(res)
 	}
 
 	return res
