@@ -9,52 +9,69 @@ import (
 	"strings"
 )
 
+//Matrix stores coordinates for a 2d matrix. Support may be added in the future for n dimensional
+//matrices, probalby just by embedding multiple 2d matrix structures into a superstruct as a slice
+//of matrices. Who knows, I haven't really thought about the implementation yet
 type Matrix struct { //data type stores coordinates for a 2D matrix
-	X, Y int
-	Mat  [][]float64
-	Cof  [][]float64
-	Adj  [][]float64
+	X, Y        int      //dimesions of the matrix
+	ColumnNames []string //this is for tables that have columns, for use in later functions
+	Matrix      [][]float64
+	Cof         [][]float64
+	Adj         [][]float64
 }
 
-type StringMat struct { //data type holds values for a 2D matrix of string values
-	X, Y int
-	Mat  [][]string
+//stringMat is for storing a string version of a matrix for printing and visualization
+type stringMat struct {
+	X, Y int        //dimensions of the matrix
+	Mat  [][]string //this is where string versions of the float64 values will be held
 }
 
-func MakeMat(x, y int) *Matrix { //Instantiates and creates a pointer to an empty 2D matrix
+//MakeMatrix takes dimensions as input and returns a pointer to a matrix struct
+func MakeMatrix(x, y int) *Matrix {
 
-	a := make([][]float64, x)
+	matrix := make([][]float64, x)
 
-	var b [][]float64
-
-	var c [][]float64
-
-	for i := range a {
-		a[i] = make([]float64, y)
+	for i := range matrix {
+		matrix[i] = make([]float64, y)
 	}
 
-	mat := &Matrix{x, y, a, b, c}
+	columns := make([]string, x)
+
+	var cof [][]float64
+
+	var adj [][]float64
+
+	mat := &Matrix{
+		X:           x,
+		Y:           y,
+		ColumnNames: columns,
+		Matrix:      matrix,
+		Cof:         cof,
+		Adj:         adj,
+	}
 
 	return mat
 }
 
-func StringMatrix(x, y int) *StringMat { //converets type Matrix to type StringMat, mainly for use in PrintMat function
+//StringMatrix converets type Matrix to type StringMat, mainly for use in PrintMat function
+func StringMatrix(x, y int) *stringMat {
 	a := make([][]string, x)
 
 	for i := range a {
 		a[i] = make([]string, y)
 	}
 
-	mat := &StringMat{x, y, a}
+	mat := &stringMat{x, y, a}
 
 	return mat
 }
 
-func (m *Matrix) PrintMat() *StringMat { //Converts an float64 matrix to string and prints
+//PrintMat converts a float64 matrix to string and prints
+func (m *Matrix) PrintMat() *stringMat {
 	a := StringMatrix(m.X, m.Y)
-	for i := 0; i < len(m.Mat); i++ {
-		for j := 0; j < len(m.Mat[i]); j++ {
-			a.Mat[i][j] = strconv.FormatFloat(m.Mat[i][j], 'f', 2, 64)
+	for i := 0; i < len(m.Matrix); i++ {
+		for j := 0; j < len(m.Matrix[i]); j++ {
+			a.Mat[i][j] = strconv.FormatFloat(m.Matrix[i][j], 'f', 2, 64)
 		}
 		b := strings.Join(a.Mat[i], " ")
 		fmt.Println(b)
@@ -64,89 +81,90 @@ func (m *Matrix) PrintMat() *StringMat { //Converts an float64 matrix to string 
 	return a
 }
 
-func (m *Matrix) RandFill() *Matrix { //fills a matrix struct with empty values
+//RandFill fills an empty matrix with random values
+func (m *Matrix) RandFill() *Matrix {
 	for i := 0; i < m.X; i++ {
 		for j := 0; j < m.Y; j++ {
-			m.Mat[i][j] = rand.NormFloat64()
+			m.Matrix[i][j] = rand.NormFloat64()
 		}
 	}
 	return m
 }
 
-func MatMult(uno, dos *Matrix) *Matrix { //multiplies 2 matrices, if they can be multiplied
-	res := MakeMat(uno.X, dos.Y)
-	a := uno.Mat
-	b := dos.Mat
-	c := res.Mat
-	switch {
-	case uno.Y != dos.X: //check that # of columns in uno matches # of rows in dos
-		fmt.Println("These matrices cannot be multiplied")
-	default:
-		for i := 0; i < res.X; i++ {
-			for j := 0; j < dos.Y; j++ {
-				for k := 0; k < uno.Y; k++ {
-					c[i][j] += a[i][k] * b[k][j]
-				}
+//MatMult takes two matrices as inputs and multiplies them if they can be multiplied, or returns an error
+func MatMult(first, second *Matrix) (*Matrix, error) {
+	res := MakeMatrix(first.X, second.Y)
+	a := first.Matrix
+	b := second.Matrix
+	c := res.Matrix
+	if first.Y != second.X { //check that # of columns in first matches # of rows in second
+		return res, fmt.Errorf("Matrices cannot be multiplied.")
+	}
+	for i := 0; i < res.X; i++ {
+		for j := 0; j < second.Y; j++ {
+			for k := 0; k < first.Y; k++ {
+				c[i][j] += a[i][k] * b[k][j]
 			}
 		}
-
 	}
 
-	return res
+	return res, nil
 }
 
-func (m *Matrix) IdentityMatrix() *Matrix { //creates an identity matrix for a given input matrix
+//IdentityMatrix is a method that returns a pointer to an identity matrix of the given matrix
+//If no identity matrix can be found, it returns an error
+func (m *Matrix) IdentityMatrix() (*Matrix, error) {
 
 	var res *Matrix
 
-	switch {
-	case m.X != m.Y:
-		fmt.Println("Nah. Not today")
-		return m
-	default:
-		res = MakeMat(m.X, m.Y)
+	if m.X != m.Y {
+		return &Matrix{}, fmt.Errorf("No identity matrix found")
 	}
 
-	for i := range res.Mat {
-		res.Mat[i][i] = 1
+	res = MakeMatrix(m.X, m.Y)
+
+	for i := range res.Matrix {
+		res.Matrix[i][i] = 1
 	}
 
-	return res
+	return res, nil
 }
 
-func (m *Matrix) Invert() *Matrix { //finds the inverse of a matrix. Currently only works for 2x2
-	I := MakeMat(m.X, m.Y)
+//Invert is a method which finds the inverse of a given matrix
+//Currently only works for 2x2 matrices
+func (m *Matrix) Invert() (*Matrix, error) {
+	res := MakeMatrix(m.X, m.Y)
 
 	if m.X != m.Y {
-		fmt.Println("Only square matrices can be inverted")
-		return m
+		return res, fmt.Errorf("Only square matrices may be inverted")
 	}
 
-	for i := range m.Mat {
-		copy(I.Mat[i], m.Mat[i])
+	//I don't think this step is necessary. Like, at all
+	for i := range m.Matrix {
+		copy(res.Matrix[i], m.Matrix[i])
 	}
 
-	switch m.X {
+	switch m.X { //ew. I'm not sure a switch statement is necessary here, just write a better algorithm
 	case 2:
 		switch m.Y {
 		case 2:
-			det := 1 / ((m.Mat[0][0] * m.Mat[1][1]) - (m.Mat[0][1] * m.Mat[1][0]))
-			for i := range I.Mat {
-				for j := range I.Mat[i] {
-					val := (I.Mat[i][j] * det)
-					I.Mat[i][j] = val
+			det := 1 / ((m.Matrix[0][0] * m.Matrix[1][1]) - (m.Matrix[0][1] * m.Matrix[1][0]))
+			for i := range res.Matrix {
+				for j := range res.Matrix[i] {
+					val := (res.Matrix[i][j] * det)
+					res.Matrix[i][j] = val
 				}
 			}
-			a, b := I.Mat[0][0], I.Mat[1][1]
-			I.Mat[0][0] = b
-			I.Mat[1][1] = a
-			I.Mat[0][1] *= -1
-			I.Mat[1][0] *= -1
+			a, b := res.Matrix[0][0], res.Matrix[1][1] //seems unnecessary to declare them in their own line
+			res.Matrix[0][0] = b
+			res.Matrix[1][1] = a
+			res.Matrix[0][1] *= -1
+			res.Matrix[1][0] *= -1
 		default:
-			fmt.Println("I can't do that yet")
+			return res, fmt.Errorf("Still working on this feature")
 		}
 	default:
-		fmt.Println("I can't do that yet")
+		return res, fmt.Errorf("Still working on this feature")
 	}
-	return I
+	return res, nil
 }
