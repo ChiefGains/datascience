@@ -144,9 +144,10 @@ func (m *Matrix) Invert() (*Matrix, error) {
 		copy(res.Matrix[i], m.Matrix[i])
 	}
 
+	//this whole algorithm is just painfully convoluted. I'm going to have to brush up on the math and fix it
 	switch m.X { //ew. I'm not sure a switch statement is necessary here, just write a better algorithm
 	case 2:
-		switch m.Y {
+		switch m.Y { //we've already checked to make sure x and y are the same, this step is totally unnecessary
 		case 2:
 			det := 1 / ((m.Matrix[0][0] * m.Matrix[1][1]) - (m.Matrix[0][1] * m.Matrix[1][0]))
 			for i := range res.Matrix {

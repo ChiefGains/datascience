@@ -4,6 +4,7 @@ package datascience
 //don't have a neat category yet
 
 //LineIntercept takes two lines and determines where they intersect
+//Note that this method does not account for logarithmic or parabolic functions
 func LineIntercept(a, b *Line) float64 {
 	if a.Intercept == b.Intercept {
 		return a.Intercept
